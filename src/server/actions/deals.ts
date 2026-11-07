@@ -8,13 +8,14 @@ import { createDeal, deleteDeal, updateDeal } from "@/server/services/deals";
 import { parseForm } from "@/server/validation/common";
 import { dealCreateSchema, dealUpdateSchema } from "@/server/validation/deal";
 
-// Сделка видна в своём разделе, числом связанных сделок в карточках компании и контакта
-// и названием в карточке конвертированного лида.
+// Сделка видна в своём разделе, в блоке «Сделки» карточек компании и контакта,
+// названием в карточке конвертированного лида и в результатах глобального поиска.
 function revalidateDealPages() {
   revalidatePath("/deals", "layout");
   revalidatePath("/accounts", "layout");
   revalidatePath("/contacts", "layout");
   revalidatePath("/leads", "layout");
+  revalidatePath("/search");
 }
 
 export async function createDealAction(_prev: FormState, formData: FormData): Promise<FormState> {

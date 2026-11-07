@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Pencil } from "lucide-react";
+import { RelatedDeals } from "@/components/deals/related-deals";
 import { PageHeader } from "@/components/shell/page-header";
 import { ArrowLink } from "@/components/ui/arrow-link";
 import { Block } from "@/components/ui/block";
@@ -14,6 +15,7 @@ import { Section } from "@/components/ui/section";
 import { websiteHref } from "@/lib/format";
 import { deleteAccountAction } from "@/server/actions/accounts";
 import { getAccount } from "@/server/queries/accounts";
+import { listRelatedDeals } from "@/server/queries/deals";
 import { getAccountDeleteImpact } from "@/server/services/accounts";
 
 export const metadata: Metadata = { title: "Компания" };
@@ -28,7 +30,7 @@ export default function AccountPage({ params }: PageProps<"/accounts/[id]">) {
 
 async function AccountCard({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [account, impact] = await Promise.all([getAccount(id), getAccountDeleteImpact(id)]);
+  const [account, impact, deals] = await Promise.all([getAccount(id), getAccountDeleteImpact(id), listRelatedDeals({ accountId: id })]);
   if (!account) notFound();
 
   return (
@@ -90,7 +92,7 @@ async function AccountCard({ params }: { params: Promise<{ id: string }> }) {
           </Section>
         </div>
 
-        <div className="xl:col-span-5">
+        <div className="flex flex-col gap-6 xl:col-span-5">
           <Block
             title={`Контакты · ${account.contacts.length}`}
             action={<ArrowLink href={`/contacts/new?accountId=${id}`}>Добавить</ArrowLink>}
@@ -114,11 +116,7 @@ async function AccountCard({ params }: { params: Promise<{ id: string }> }) {
               )}
             </div>
           </Block>
-          {impact.opportunities > 0 && (
-            <p className="mt-3 px-1 text-small text-ink-secondary">
-              Связанные сделки: {impact.opportunities}.
-            </p>
-          )}
+          <RelatedDeals deals={deals} emptyText="У компании пока нет сделок." />
         </div>
       </div>
     </>

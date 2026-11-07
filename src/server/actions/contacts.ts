@@ -14,6 +14,7 @@ function revalidateContactPages() {
   revalidatePath("/contacts", "layout");
   revalidatePath("/accounts", "layout");
   revalidatePath("/deals", "layout");
+  revalidatePath("/search");
 }
 
 export async function createContactAction(_prev: FormState, formData: FormData): Promise<FormState> {

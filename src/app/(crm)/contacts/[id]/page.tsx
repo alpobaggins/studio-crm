@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Building2, Pencil } from "lucide-react";
+import { RelatedDeals } from "@/components/deals/related-deals";
 import { PageHeader } from "@/components/shell/page-header";
 import { ArrowLink } from "@/components/ui/arrow-link";
 import { Block } from "@/components/ui/block";
@@ -14,6 +15,7 @@ import { ListSkeleton } from "@/components/ui/skeleton";
 import { Section } from "@/components/ui/section";
 import { deleteContactAction } from "@/server/actions/contacts";
 import { getContact } from "@/server/queries/contacts";
+import { listRelatedDeals } from "@/server/queries/deals";
 import { getContactDeleteImpact } from "@/server/services/contacts";
 
 export const metadata: Metadata = { title: "Контакт" };
@@ -28,7 +30,7 @@ export default function ContactPage({ params }: PageProps<"/contacts/[id]">) {
 
 async function ContactCard({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [contact, impact] = await Promise.all([getContact(id), getContactDeleteImpact(id)]);
+  const [contact, impact, deals] = await Promise.all([getContact(id), getContactDeleteImpact(id), listRelatedDeals({ contactId: id })]);
   if (!contact) notFound();
 
   return (
@@ -81,7 +83,7 @@ async function ContactCard({ params }: { params: Promise<{ id: string }> }) {
           </Section>
         </div>
 
-        <div className="xl:col-span-5">
+        <div className="flex flex-col gap-6 xl:col-span-5">
           <Block title="Компания">
             {contact.account ? (
               <div className="rounded-lg bg-card px-4 py-4">
@@ -102,9 +104,8 @@ async function ContactCard({ params }: { params: Promise<{ id: string }> }) {
               />
             )}
           </Block>
-          {impact.opportunities > 0 && (
-            <p className="mt-3 px-1 text-small text-ink-secondary">Связанные сделки: {impact.opportunities}.</p>
-          )}
+          {/* Компания сделки показана у каждой сделки: она может не совпадать с компанией контакта. */}
+          <RelatedDeals deals={deals} emptyText="Контакт пока не указан ни в одной сделке." showAccount />
         </div>
       </div>
     </>

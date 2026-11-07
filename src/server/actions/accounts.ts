@@ -13,6 +13,7 @@ function revalidateAccountPages() {
   revalidatePath("/accounts", "layout");
   revalidatePath("/contacts", "layout");
   revalidatePath("/deals", "layout");
+  revalidatePath("/search");
 }
 
 export async function createAccountAction(_prev: FormState, formData: FormData): Promise<FormState> {

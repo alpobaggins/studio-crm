@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { Menu, X } from "lucide-react";
+import { GlobalSearch } from "./global-search";
 import { NAV_ITEMS } from "./nav-items";
 
 function NavLinks({ pathname, onNavigate }: { pathname: string | null; onNavigate?: () => void }) {
@@ -133,7 +134,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       </dialog>
 
       <main className="min-w-0 flex-1 px-4 py-8 sm:px-8 xl:px-12 xl:py-10">
-        <div className="mx-auto max-w-[1440px]">{children}</div>
+        <div className="mx-auto max-w-[1440px]">
+          {/* Глобальный поиск — справа над заголовком страницы, на телефоне во всю ширину (DESIGN.md 4). */}
+          <div className="mb-6 flex justify-end">
+            <GlobalSearch />
+          </div>
+          {children}
+        </div>
       </main>
     </div>
   );

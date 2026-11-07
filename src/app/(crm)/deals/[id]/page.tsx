@@ -9,7 +9,7 @@ import { ArrowLink } from "@/components/ui/arrow-link";
 import { Block } from "@/components/ui/block";
 import { buttonClasses } from "@/components/ui/button";
 import { DeleteButton } from "@/components/ui/delete-button";
-import { Details } from "@/components/ui/details";
+import { Details, valueLinkClasses } from "@/components/ui/details";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListSkeleton } from "@/components/ui/skeleton";
 import { Section } from "@/components/ui/section";
@@ -78,6 +78,23 @@ async function DealCard({ params }: { params: Promise<{ id: string }> }) {
                 { label: "Дата мероприятия", value: deal.eventDate && formatDate(deal.eventDate) },
                 { label: "Площадка", value: deal.venue },
                 { label: "Формат работ", value: deal.workFormat },
+                // Связь с лидом есть только у сделок, созданных конвертацией (Lead.convertedOpportunity).
+                ...(deal.convertedLeads.length
+                  ? [
+                      {
+                        label: "Создана из лида",
+                        value: (
+                          <span className="flex flex-col gap-1">
+                            {deal.convertedLeads.map((lead) => (
+                              <Link key={lead.id} href={`/leads/${lead.id}`} className={valueLinkClasses}>
+                                {lead.contactName}
+                              </Link>
+                            ))}
+                          </span>
+                        ),
+                      },
+                    ]
+                  : []),
                 { label: "Комментарий", value: deal.comment && <span className="whitespace-pre-line">{deal.comment}</span> },
                 { label: "Создана", value: formatDateInZone(deal.createdAt, timeZone) },
               ]}

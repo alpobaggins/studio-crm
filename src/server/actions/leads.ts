@@ -8,9 +8,12 @@ import { createLead, deleteLead, updateLead } from "@/server/services/leads";
 import { parseForm } from "@/server/validation/common";
 import { leadSchema } from "@/server/validation/lead";
 
-// Список с любыми фильтрами, карточка и форма изменения лежат под /leads.
+// Список с любыми фильтрами, карточка и форма изменения лежат под /leads; имя лида показано
+// в карточке созданной из него сделки; лиды есть в результатах глобального поиска.
 function revalidateLeadPages() {
   revalidatePath("/leads", "layout");
+  revalidatePath("/deals", "layout");
+  revalidatePath("/search");
 }
 
 export async function createLeadAction(_prev: FormState, formData: FormData): Promise<FormState> {

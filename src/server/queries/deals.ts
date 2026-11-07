@@ -43,6 +43,8 @@ export async function getDeal(id: string) {
       // Собственная компания контакта: она может отличаться от компании сделки (DESIGN.md, «Карточка сущности»).
       contact: { select: { id: true, fullName: true, position: true, account: { select: { id: true, name: true } } } },
       stage: { select: { id: true, name: true, type: true } },
+      // Лид, при конвертации которого создана сделка (Lead.convertedOpportunity).
+      convertedLeads: { orderBy: { createdAt: "asc" }, select: { id: true, contactName: true } },
     },
   });
   return deal && { ...deal, amount: deal.amount?.toString() ?? null };
@@ -51,4 +53,20 @@ export async function getDeal(id: string) {
 /** Справочник стадий по порядку воронки. */
 export function listStages() {
   return prisma.stage.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true, type: true } });
+}
+
+/** Сделки компании или контакта для карточки — связи независимы (Plan.md 1.5). */
+export async function listRelatedDeals(where: { accountId: string } | { contactId: string }) {
+  const deals = await prisma.opportunity.findMany({
+    where,
+    orderBy: [{ stage: { order: "asc" } }, { createdAt: "desc" }, { id: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      amount: true,
+      account: { select: { name: true } },
+      stage: { select: { name: true, type: true } },
+    },
+  });
+  return deals.map((deal) => ({ ...deal, amount: deal.amount?.toString() ?? null }));
 }
