@@ -46,3 +46,8 @@ export async function getLead(id: string) {
   });
   return lead && { ...lead, budget: lead.budget?.toString() ?? null };
 }
+
+/** Сколько активностей перейдёт к сделке или контакту при конвертации. */
+export function countLeadActivities(leadId: string) {
+  return prisma.activity.count({ where: { leadId } });
+}

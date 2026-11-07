@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from "react";
 
-type Variant = "primary" | "secondary" | "danger";
+type Variant = "primary" | "secondary" | "accent" | "danger";
 
 const base =
   "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-5 text-body font-semibold " +
@@ -11,6 +11,8 @@ const variants: Record<Variant, string> = {
   primary: "bg-inverse text-ink-inverse hover:bg-inverse-hover disabled:bg-control",
   // Второе действие — светло-серая капсула.
   secondary: "bg-control text-ink hover:bg-control-hover",
+  // Одна ключевая кнопка процесса на экране — «Конвертировать» (DESIGN.md 3.1, «Кнопки»).
+  accent: "bg-accent text-ink-inverse hover:bg-accent-hover disabled:bg-control",
   // Удаление: белая капсула с чёрной границей, всегда с подтверждением.
   danger: "border-[1.5px] border-ink bg-card text-ink hover:bg-subtle",
 };

@@ -99,7 +99,7 @@ async function LeadCard({ params }: { params: Promise<{ id: string }> }) {
         <div className="xl:col-span-5">
           <Block title="Конвертация">
             <div className="rounded-lg bg-card px-4 py-4 sm:px-5">
-              {converted ? <ConvertedLinks lead={lead} /> : <ConvertPlaceholder status={lead.status} />}
+              {converted ? <ConvertedLinks lead={lead} /> : <ConvertAction id={id} status={lead.status} />}
             </div>
           </Block>
         </div>
@@ -109,22 +109,32 @@ async function LeadCard({ params }: { params: Promise<{ id: string }> }) {
 }
 
 /**
- * Конвертация появится на шаге 10. До этого кнопка неактивна, причина написана рядом текстом
+ * Конвертация открывается отдельным экраном. У отклонённого лида кнопка неактивна, причина написана рядом
  * (DESIGN.md, «Кнопки»: неактивная кнопка — `text-disabled`, причина рядом).
  */
-function ConvertPlaceholder({ status }: { status: Lead["status"] }) {
-  const convertible = CONVERTIBLE_LEAD_STATUSES.includes(status);
+function ConvertAction({ id, status }: { id: string; status: Lead["status"] }) {
+  if (!CONVERTIBLE_LEAD_STATUSES.includes(status)) {
+    return (
+      <div className="flex flex-col items-start gap-3">
+        <p id="convert-reason" className="text-body text-ink-secondary">
+          Отклонённый лид нельзя конвертировать. Сначала верните его в работу: измените статус.
+        </p>
+        <Button disabled aria-describedby="convert-reason">
+          <ArrowRightLeft aria-hidden="true" size={18} />
+          Конвертировать
+        </Button>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col items-start gap-3">
-      <p id="convert-reason" className="text-body text-ink-secondary">
-        {convertible
-          ? "Конвертация в контакт, компанию и сделку пока недоступна — она появится в следующей версии."
-          : "Отклонённый лид нельзя конвертировать. Сначала верните его в работу: измените статус."}
+      <p className="text-body text-ink-secondary">
+        Лид станет контактом в новой или существующей компании, по желанию — со сделкой.
       </p>
-      <Button disabled aria-describedby="convert-reason">
+      <Link href={`/leads/${id}/convert`} className={buttonClasses("accent")}>
         <ArrowRightLeft aria-hidden="true" size={18} />
         Конвертировать
-      </Button>
+      </Link>
     </div>
   );
 }
@@ -134,7 +144,9 @@ function ConvertedLinks({ lead }: { lead: Lead }) {
   return (
     <div className="flex flex-col gap-3">
       {lead.convertedAt && (
-        <p className="text-body text-ink-secondary">Конвертирован {formatDateInZone(lead.convertedAt, getAppTimeZone())}.</p>
+        <p className="text-body text-ink-secondary">
+          Лид конвертирован {formatDateInZone(lead.convertedAt, getAppTimeZone())} и доступен только для просмотра.
+        </p>
       )}
       <dl className="divide-y divide-line">
         <LinkRow label="Компания">
