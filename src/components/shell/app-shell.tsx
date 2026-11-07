@@ -2,16 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, type ReactNode } from "react";
+import { Suspense, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { Menu, X } from "lucide-react";
 import { NAV_ITEMS } from "./nav-items";
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
+function NavLinks({ pathname, onNavigate }: { pathname: string | null; onNavigate?: () => void }) {
   return (
     <ul className="flex flex-col gap-1">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href || pathname.startsWith(`${href}/`);
+        const active = pathname !== null && (pathname === href || pathname.startsWith(`${href}/`));
         return (
           <li key={href}>
             <Link
@@ -40,6 +39,31 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+function CurrentNavLinks({ onNavigate }: { onNavigate?: () => void }) {
+  return <NavLinks pathname={usePathname()} onNavigate={onNavigate} />;
+}
+
+/**
+ * Текущий адрес на страницах с динамическими параметрами известен только при запросе,
+ * поэтому подсветка активного пункта стоит внутри <Suspense>; до этого меню показывается без подсветки.
+ */
+function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <Suspense fallback={<NavLinks pathname={null} onNavigate={onNavigate} />}>
+      <CurrentNavLinks onNavigate={onNavigate} />
+    </Suspense>
+  );
+}
+
+/** Закрывает мобильное меню при смене страницы, в том числе по кнопкам браузера. */
+function CloseOnNavigation({ close }: { close: () => void }) {
+  const pathname = usePathname();
+  useEffect(() => {
+    close();
+  }, [pathname, close]);
+  return null;
+}
+
 function Brand() {
   return (
     <Link href="/dashboard" className="rounded-sm text-[1.25rem] font-bold leading-none tracking-[-0.04em]">
@@ -54,22 +78,20 @@ function Brand() {
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const drawerRef = useRef<HTMLDialogElement>(null);
-  const pathname = usePathname();
-  const closeDrawer = () => drawerRef.current?.close();
-
-  // Меню закрывается при смене страницы, в том числе по кнопкам браузера.
-  useEffect(() => {
-    drawerRef.current?.close();
-  }, [pathname]);
+  const closeDrawer = useCallback(() => drawerRef.current?.close(), []);
 
   return (
     <div className="min-h-screen lg:flex">
+      <Suspense fallback={null}>
+        <CloseOnNavigation close={closeDrawer} />
+      </Suspense>
+
       <aside className="hidden shrink-0 border-r border-line lg:block lg:w-[216px] xl:w-[248px]">
         <nav aria-label="Основная навигация" className="sticky top-0 flex h-screen flex-col gap-10 px-4 py-8">
           <div className="px-4">
             <Brand />
           </div>
-          <NavLinks />
+          <Navigation />
         </nav>
       </aside>
 
@@ -106,7 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <X aria-hidden="true" size={22} strokeWidth={1.75} />
             </button>
           </div>
-          <NavLinks onNavigate={closeDrawer} />
+          <Navigation onNavigate={closeDrawer} />
         </nav>
       </dialog>
 
