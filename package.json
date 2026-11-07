@@ -12,9 +12,15 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "postinstall": "prisma generate",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "tsx scripts/with-test-db.ts prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:status": "prisma migrate status"
+    "db:status": "prisma migrate status",
+    "db:seed": "prisma db seed",
+    "db:reset": "tsx prisma/seed.ts --reset",
+    "test": "tsx scripts/with-test-db.ts node --import tsx --test --test-concurrency=1 \"tests/**/*.test.ts\""
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
