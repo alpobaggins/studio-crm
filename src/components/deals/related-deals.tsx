@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLink } from "@/components/ui/arrow-link";
 import { DealStatusBadge } from "@/components/deals/deal-status-badge";
 import { Block } from "@/components/ui/block";
 import { formatMoney } from "@/lib/format";
@@ -12,13 +13,16 @@ export function RelatedDeals({
   deals,
   emptyText,
   showAccount = false,
+  addHref,
 }: {
   deals: Awaited<ReturnType<typeof listRelatedDeals>>;
   emptyText: string;
   showAccount?: boolean;
+  /** Быстрое действие «Создать сделку» с подстановкой связей в форму. */
+  addHref?: string;
 }) {
   return (
-    <Block title={`Сделки · ${deals.length}`}>
+    <Block title={`Сделки · ${deals.length}`} action={addHref && <ArrowLink href={addHref}>Добавить</ArrowLink>}>
       <div className="rounded-lg bg-card px-4 py-2">
         {deals.length === 0 ? (
           <p className="py-4 text-body text-ink-secondary">{emptyText}</p>

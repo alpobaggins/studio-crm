@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Pencil, UserRound } from "lucide-react";
+import { ActivityFeed } from "@/components/activities/activity-feed";
 import { DealStageAction } from "@/components/deals/deal-stage-action";
 import { DealStatusBadge } from "@/components/deals/deal-status-badge";
 import { PageHeader } from "@/components/shell/page-header";
@@ -14,12 +15,13 @@ import { Details, valueLinkClasses } from "@/components/ui/details";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListSkeleton } from "@/components/ui/skeleton";
 import { Section } from "@/components/ui/section";
-import { getAppTimeZone } from "@/lib/dates";
 import { formatDate, formatDateInZone, formatMoney } from "@/lib/format";
 import { deleteDealAction } from "@/server/actions/deals";
+import { listActivities } from "@/server/queries/activities";
 import { listContactOptions } from "@/server/queries/contacts";
 import { getDeal, listStages } from "@/server/queries/deals";
 import { getDealDeleteImpact } from "@/server/services/deals";
+import { getAppToday } from "@/server/today";
 
 export const metadata: Metadata = { title: "Сделка" };
 
@@ -33,14 +35,15 @@ export default function DealPage({ params }: PageProps<"/deals/[id]">) {
 
 async function DealCard({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [deal, impact, stages, contacts] = await Promise.all([
+  const { today, timeZone } = await getAppToday();
+  const [deal, impact, stages, contacts, activities] = await Promise.all([
     getDeal(id),
     getDealDeleteImpact(id),
     listStages(),
     listContactOptions(),
+    listActivities({ type: "opportunity", id }, today, timeZone),
   ]);
   if (!deal) notFound();
-  const timeZone = getAppTimeZone();
 
   return (
     <>
@@ -70,7 +73,7 @@ async function DealCard({ params }: { params: Promise<{ id: string }> }) {
       />
 
       <div className="grid grid-cols-1 gap-x-10 gap-y-8 xl:grid-cols-12">
-        <div className="xl:col-span-7">
+        <div className="flex flex-col gap-10 xl:col-span-7">
           <Section title="Данные сделки">
             <Details
               items={[
@@ -112,6 +115,7 @@ async function DealCard({ params }: { params: Promise<{ id: string }> }) {
               ]}
             />
           </Section>
+          <ActivityFeed parent={{ type: "opportunity", id }} activities={activities} />
         </div>
 
         <div className="flex flex-col gap-6 xl:col-span-5">

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { ArrowRightLeft, Pencil } from "lucide-react";
+import { ActivityFeed } from "@/components/activities/activity-feed";
 import { LeadStatusBadge } from "@/components/leads/lead-status-badge";
 import { PageHeader } from "@/components/shell/page-header";
 import { Block } from "@/components/ui/block";
@@ -15,8 +16,10 @@ import { getAppTimeZone } from "@/lib/dates";
 import { formatDate, formatDateInZone, formatMoney } from "@/lib/format";
 import { CONVERTIBLE_LEAD_STATUSES, LEAD_SOURCE_LABELS } from "@/lib/leads";
 import { deleteLeadAction } from "@/server/actions/leads";
+import { listActivities } from "@/server/queries/activities";
 import { getLead } from "@/server/queries/leads";
 import { getLeadDeleteImpact } from "@/server/services/leads";
+import { getAppToday } from "@/server/today";
 
 export const metadata: Metadata = { title: "Лид" };
 
@@ -32,7 +35,12 @@ type Lead = NonNullable<Awaited<ReturnType<typeof getLead>>>;
 
 async function LeadCard({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [lead, impact] = await Promise.all([getLead(id), getLeadDeleteImpact(id)]);
+  const { today, timeZone } = await getAppToday();
+  const [lead, impact, activities] = await Promise.all([
+    getLead(id),
+    getLeadDeleteImpact(id),
+    listActivities({ type: "lead", id }, today, timeZone),
+  ]);
   if (!lead) notFound();
   const converted = lead.status === "converted";
 
@@ -62,7 +70,7 @@ async function LeadCard({ params }: { params: Promise<{ id: string }> }) {
       />
 
       <div className="grid grid-cols-1 gap-x-10 gap-y-8 xl:grid-cols-12">
-        <div className="xl:col-span-7">
+        <div className="flex flex-col gap-10 xl:col-span-7">
           <Section title="Данные лида">
             <Details
               items={[
@@ -94,6 +102,11 @@ async function LeadCard({ params }: { params: Promise<{ id: string }> }) {
               ]}
             />
           </Section>
+          <ActivityFeed
+            parent={{ type: "lead", id }}
+            activities={activities}
+            locked={converted ? <ConvertedActivitiesNote lead={lead} /> : undefined}
+          />
         </div>
 
         <div className="xl:col-span-5">
@@ -178,6 +191,35 @@ function ConvertedLinks({ lead }: { lead: Lead }) {
         </LinkRow>
       </dl>
     </div>
+  );
+}
+
+/**
+ * При конвертации активности лида перенесены на сделку, а без сделки — на контакт (Plan.md 1.6),
+ * поэтому новые заметки и задачи добавляются там.
+ */
+function ConvertedActivitiesNote({ lead }: { lead: Lead }) {
+  const target = lead.convertedOpportunity
+    ? { href: `/deals/${lead.convertedOpportunity.id}`, label: `сделку «${lead.convertedOpportunity.name}»` }
+    : lead.convertedContact
+      ? { href: `/contacts/${lead.convertedContact.id}`, label: `контакт «${lead.convertedContact.fullName}»` }
+      : null;
+  return (
+    <p className="text-body text-ink-secondary">
+      Лид конвертирован: его заметки и задачи перенесены
+      {target ? (
+        <>
+          {" "}
+          в{" "}
+          <Link href={target.href} className={valueLinkClasses}>
+            {target.label}
+          </Link>
+          . Новые добавляйте там.
+        </>
+      ) : (
+        " в созданную сделку или контакт."
+      )}
+    </p>
   );
 }
 

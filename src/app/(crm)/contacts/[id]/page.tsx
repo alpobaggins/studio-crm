@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Building2, Pencil } from "lucide-react";
+import { ActivityFeed } from "@/components/activities/activity-feed";
 import { RelatedDeals } from "@/components/deals/related-deals";
 import { PageHeader } from "@/components/shell/page-header";
 import { ArrowLink } from "@/components/ui/arrow-link";
@@ -14,9 +15,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ListSkeleton } from "@/components/ui/skeleton";
 import { Section } from "@/components/ui/section";
 import { deleteContactAction } from "@/server/actions/contacts";
+import { listActivities } from "@/server/queries/activities";
 import { getContact } from "@/server/queries/contacts";
 import { listRelatedDeals } from "@/server/queries/deals";
 import { getContactDeleteImpact } from "@/server/services/contacts";
+import { getAppToday } from "@/server/today";
 
 export const metadata: Metadata = { title: "Контакт" };
 
@@ -30,7 +33,13 @@ export default function ContactPage({ params }: PageProps<"/contacts/[id]">) {
 
 async function ContactCard({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [contact, impact, deals] = await Promise.all([getContact(id), getContactDeleteImpact(id), listRelatedDeals({ contactId: id })]);
+  const { today, timeZone } = await getAppToday();
+  const [contact, impact, deals, activities] = await Promise.all([
+    getContact(id),
+    getContactDeleteImpact(id),
+    listRelatedDeals({ contactId: id }),
+    listActivities({ type: "contact", id }, today, timeZone),
+  ]);
   if (!contact) notFound();
 
   return (
@@ -56,7 +65,7 @@ async function ContactCard({ params }: { params: Promise<{ id: string }> }) {
       />
 
       <div className="grid grid-cols-1 gap-x-10 gap-y-8 xl:grid-cols-12">
-        <div className="xl:col-span-7">
+        <div className="flex flex-col gap-10 xl:col-span-7">
           <Section title="Данные контакта">
             <Details
               items={[
@@ -81,6 +90,7 @@ async function ContactCard({ params }: { params: Promise<{ id: string }> }) {
               ]}
             />
           </Section>
+          <ActivityFeed parent={{ type: "contact", id }} activities={activities} />
         </div>
 
         <div className="flex flex-col gap-6 xl:col-span-5">
@@ -105,7 +115,13 @@ async function ContactCard({ params }: { params: Promise<{ id: string }> }) {
             )}
           </Block>
           {/* Компания сделки показана у каждой сделки: она может не совпадать с компанией контакта. */}
-          <RelatedDeals deals={deals} emptyText="Контакт пока не указан ни в одной сделке." showAccount />
+          {/* Быстрое создание сделки: форма подставит контакт и его компанию, если она есть (Plan.md, шаг 12). */}
+          <RelatedDeals
+            deals={deals}
+            emptyText="Контакт пока не указан ни в одной сделке."
+            showAccount
+            addHref={`/deals/new?contactId=${id}${contact.account ? `&accountId=${contact.account.id}` : ""}`}
+          />
         </div>
       </div>
     </>

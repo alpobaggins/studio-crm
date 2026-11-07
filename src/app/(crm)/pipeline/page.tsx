@@ -8,6 +8,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listContactOptions } from "@/server/queries/contacts";
 import { getPipeline } from "@/server/queries/deals";
+import { getAppToday } from "@/server/today";
 
 export const metadata: Metadata = { title: "Воронка" };
 
@@ -33,7 +34,8 @@ export default function PipelinePage() {
 
 // Колонки строятся из справочника Stage (Plan.md 1.4); данные читаются из базы при каждом запросе.
 async function Board() {
-  const [columns, contacts] = await Promise.all([getPipeline(), listContactOptions()]);
+  const { today } = await getAppToday();
+  const [columns, contacts] = await Promise.all([getPipeline(today), listContactOptions()]);
   return (
     <PipelineBoard
       columns={columns}

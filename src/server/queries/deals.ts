@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db";
+import { overdueTaskWhere } from "@/server/queries/activities";
 import type { DealFilters } from "@/server/validation/deal";
 
 /**
@@ -58,9 +59,10 @@ export function listStages() {
 /**
  * Доска воронки: все шесть стадий по порядку (пустые тоже), сделки каждой стадии, количество и сумма.
  * Количество и сумма считаются в базе через `groupBy`; пустая сумма сделки в итог не входит (как 0).
- * Порядок карточек в колонке не хранится: новые сверху.
+ * Порядок карточек в колонке не хранится: новые сверху. `overdue` — у сделки есть просроченная задача
+ * (Plan.md 1.7; today — сегодняшняя дата в APP_TIME_ZONE).
  */
-export async function getPipeline() {
+export async function getPipeline(today: Date) {
   const [stages, deals, totals] = await Promise.all([
     listStages(),
     prisma.opportunity.findMany({
@@ -73,6 +75,7 @@ export async function getPipeline() {
         contactId: true,
         account: { select: { name: true } },
         contact: { select: { fullName: true } },
+        _count: { select: { activities: { where: overdueTaskWhere(today) } } },
       },
     }),
     prisma.opportunity.groupBy({ by: ["stageId"], _count: { _all: true }, _sum: { amount: true } }),
@@ -85,7 +88,7 @@ export async function getPipeline() {
       sum: total?._sum.amount?.toString() ?? "0",
       deals: deals
         .filter((deal) => deal.stageId === stage.id)
-        .map((deal) => ({ ...deal, amount: deal.amount?.toString() ?? null })),
+        .map(({ _count, ...deal }) => ({ ...deal, amount: deal.amount?.toString() ?? null, overdue: _count.activities > 0 })),
     };
   });
 }

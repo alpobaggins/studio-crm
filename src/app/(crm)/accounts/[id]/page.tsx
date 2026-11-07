@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Pencil } from "lucide-react";
+import { ActivityFeed } from "@/components/activities/activity-feed";
 import { RelatedDeals } from "@/components/deals/related-deals";
 import { PageHeader } from "@/components/shell/page-header";
 import { ArrowLink } from "@/components/ui/arrow-link";
@@ -14,9 +15,11 @@ import { ListSkeleton } from "@/components/ui/skeleton";
 import { Section } from "@/components/ui/section";
 import { websiteHref } from "@/lib/format";
 import { deleteAccountAction } from "@/server/actions/accounts";
+import { listActivities } from "@/server/queries/activities";
 import { getAccount } from "@/server/queries/accounts";
 import { listRelatedDeals } from "@/server/queries/deals";
 import { getAccountDeleteImpact } from "@/server/services/accounts";
+import { getAppToday } from "@/server/today";
 
 export const metadata: Metadata = { title: "Компания" };
 
@@ -30,7 +33,13 @@ export default function AccountPage({ params }: PageProps<"/accounts/[id]">) {
 
 async function AccountCard({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [account, impact, deals] = await Promise.all([getAccount(id), getAccountDeleteImpact(id), listRelatedDeals({ accountId: id })]);
+  const { today, timeZone } = await getAppToday();
+  const [account, impact, deals, activities] = await Promise.all([
+    getAccount(id),
+    getAccountDeleteImpact(id),
+    listRelatedDeals({ accountId: id }),
+    listActivities({ type: "account", id }, today, timeZone),
+  ]);
   if (!account) notFound();
 
   return (
@@ -56,7 +65,7 @@ async function AccountCard({ params }: { params: Promise<{ id: string }> }) {
       />
 
       <div className="grid grid-cols-1 gap-x-10 gap-y-8 xl:grid-cols-12">
-        <div className="xl:col-span-7">
+        <div className="flex flex-col gap-10 xl:col-span-7">
           <Section title="Данные компании">
             <Details
               items={[
@@ -90,6 +99,7 @@ async function AccountCard({ params }: { params: Promise<{ id: string }> }) {
               ]}
             />
           </Section>
+          <ActivityFeed parent={{ type: "account", id }} activities={activities} />
         </div>
 
         <div className="flex flex-col gap-6 xl:col-span-5">
@@ -116,7 +126,7 @@ async function AccountCard({ params }: { params: Promise<{ id: string }> }) {
               )}
             </div>
           </Block>
-          <RelatedDeals deals={deals} emptyText="У компании пока нет сделок." />
+          <RelatedDeals deals={deals} emptyText="У компании пока нет сделок." addHref={`/deals/new?accountId=${id}`} />
         </div>
       </div>
     </>

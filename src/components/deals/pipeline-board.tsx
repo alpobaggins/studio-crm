@@ -17,6 +17,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { ArrowRightLeft, CircleX, LoaderCircle, Trophy } from "lucide-react";
+import { TaskStateBadge } from "@/components/activities/task-state-badge";
 import { Toast, type ToastMessage } from "@/components/ui/toast";
 import { formatMoney } from "@/lib/format";
 import { changeDealStageAction } from "@/server/actions/deals";
@@ -298,6 +299,12 @@ function CardBody({
           </span>
         )}
       </p>
+      {/* У сделки есть просроченная задача (DESIGN.md, «Kanban»; Plan.md 1.7). */}
+      {deal.overdue && (
+        <div className="mt-2">
+          <TaskStateBadge state="overdue" />
+        </div>
+      )}
     </article>
   );
 }
