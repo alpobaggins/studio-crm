@@ -55,6 +55,44 @@ export function listStages() {
   return prisma.stage.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true, type: true } });
 }
 
+/**
+ * Доска воронки: все шесть стадий по порядку (пустые тоже), сделки каждой стадии, количество и сумма.
+ * Количество и сумма считаются в базе через `groupBy`; пустая сумма сделки в итог не входит (как 0).
+ * Порядок карточек в колонке не хранится: новые сверху.
+ */
+export async function getPipeline() {
+  const [stages, deals, totals] = await Promise.all([
+    listStages(),
+    prisma.opportunity.findMany({
+      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        stageId: true,
+        amount: true,
+        contactId: true,
+        account: { select: { name: true } },
+        contact: { select: { fullName: true } },
+      },
+    }),
+    prisma.opportunity.groupBy({ by: ["stageId"], _count: { _all: true }, _sum: { amount: true } }),
+  ]);
+  return stages.map((stage) => {
+    const total = totals.find((row) => row.stageId === stage.id);
+    return {
+      ...stage,
+      count: total?._count._all ?? 0,
+      sum: total?._sum.amount?.toString() ?? "0",
+      deals: deals
+        .filter((deal) => deal.stageId === stage.id)
+        .map((deal) => ({ ...deal, amount: deal.amount?.toString() ?? null })),
+    };
+  });
+}
+
+export type PipelineColumn = Awaited<ReturnType<typeof getPipeline>>[number];
+export type PipelineDeal = PipelineColumn["deals"][number];
+
 /** Сделки компании или контакта для карточки — связи независимы (Plan.md 1.5). */
 export async function listRelatedDeals(where: { accountId: string } | { contactId: string }) {
   const deals = await prisma.opportunity.findMany({

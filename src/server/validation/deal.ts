@@ -33,8 +33,23 @@ export const dealUpdateSchema = z.object({
   lostReason: optionalText(500),
 });
 
+/**
+ * Смена стадии (Plan.md 1.5) — единственный способ изменить стадию: Kanban, карточка сделки, быстрые действия.
+ * `fromStageId` — стадия, которую видел пользователь: если её уже сменили, запрос отклоняется как устаревший.
+ * Сумма и контакт нужны только для `won` и дополняют сделку; пустое значение — оставить текущее.
+ * Причина нужна только для `lost`. Какие поля обязательны для какой стадии, проверяет сервис.
+ */
+export const dealStageChangeSchema = z.object({
+  stageId: z.preprocess(blankToUndefined, z.string({ error: "Выберите стадию" }).max(50)),
+  fromStageId: z.preprocess(blankToUndefined, z.string({ error: "Не указана текущая стадия сделки" }).max(50)),
+  amount: dealFields.amount,
+  contactId: optionalId,
+  lostReason: optionalText(500),
+});
+
 export type DealCreateInput = z.infer<typeof dealCreateSchema>;
 export type DealUpdateInput = z.infer<typeof dealUpdateSchema>;
+export type DealStageChangeInput = z.infer<typeof dealStageChangeSchema>;
 
 const firstValue = (value: unknown) => (Array.isArray(value) ? value[0] : value);
 

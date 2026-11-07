@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Pencil, UserRound } from "lucide-react";
+import { DealStageAction } from "@/components/deals/deal-stage-action";
 import { DealStatusBadge } from "@/components/deals/deal-status-badge";
 import { PageHeader } from "@/components/shell/page-header";
 import { ArrowLink } from "@/components/ui/arrow-link";
@@ -16,7 +17,8 @@ import { Section } from "@/components/ui/section";
 import { getAppTimeZone } from "@/lib/dates";
 import { formatDate, formatDateInZone, formatMoney } from "@/lib/format";
 import { deleteDealAction } from "@/server/actions/deals";
-import { getDeal } from "@/server/queries/deals";
+import { listContactOptions } from "@/server/queries/contacts";
+import { getDeal, listStages } from "@/server/queries/deals";
 import { getDealDeleteImpact } from "@/server/services/deals";
 
 export const metadata: Metadata = { title: "Сделка" };
@@ -31,7 +33,12 @@ export default function DealPage({ params }: PageProps<"/deals/[id]">) {
 
 async function DealCard({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [deal, impact] = await Promise.all([getDeal(id), getDealDeleteImpact(id)]);
+  const [deal, impact, stages, contacts] = await Promise.all([
+    getDeal(id),
+    getDealDeleteImpact(id),
+    listStages(),
+    listContactOptions(),
+  ]);
   if (!deal) notFound();
   const timeZone = getAppTimeZone();
 
@@ -43,6 +50,11 @@ async function DealCard({ params }: { params: Promise<{ id: string }> }) {
         back={{ href: "/deals", label: "Сделки" }}
         actions={
           <>
+            <DealStageAction
+              deal={{ id, name: deal.name, stageId: deal.stageId, amount: deal.amount, contactId: deal.contactId }}
+              stages={stages}
+              contacts={contacts.map((c) => ({ id: c.id, fullName: c.fullName, accountName: c.account?.name ?? null }))}
+            />
             <Link href={`/deals/${id}/edit`} className={buttonClasses("secondary")}>
               <Pencil aria-hidden="true" size={16} />
               Изменить

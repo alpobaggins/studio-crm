@@ -3,7 +3,7 @@ import { Prisma, type StageType } from "@prisma/client";
 import { prisma } from "@/server/db";
 import { DomainError } from "@/server/errors";
 import { deleteConsequences } from "@/lib/format";
-import type { DealCreateInput, DealUpdateInput } from "@/server/validation/deal";
+import type { DealCreateInput, DealStageChangeInput, DealUpdateInput } from "@/server/validation/deal";
 
 const FIELDS_MESSAGE = "Проверьте выделенные поля.";
 const NOT_FOUND_MESSAGE = "Запись не найдена — возможно, её уже удалили.";
@@ -110,6 +110,79 @@ export async function updateDeal(id: string, input: DealUpdateInput): Promise<vo
 
   const exists = await prisma.opportunity.count({ where: { id } });
   throw new DomainError(exists ? STAGE_CHANGED_MESSAGE : NOT_FOUND_MESSAGE);
+}
+
+export const STAGE_NOT_FOUND_MESSAGE = "Выбранная стадия не найдена.";
+export const SAME_STAGE_MESSAGE = "Сделка уже в этой стадии.";
+
+/** Сообщение об отказе закрыть сделку: что именно нужно указать (DESIGN.md 7, «Тон»). */
+function closeRefusalMessage(errors: Record<string, string>): string {
+  if (errors.lostReason) return "Нельзя закрыть сделку как проигранную: укажите причину проигрыша.";
+  const missing = [errors.amount && "сумму больше нуля", errors.contactId && "контакт"].filter(Boolean);
+  return `Нельзя закрыть сделку как выигранную: укажите ${missing.join(" и ")}.`;
+}
+
+/**
+ * Единственная серверная операция смены стадии (Plan.md 1.5). Её вызывают карточка сделки, Kanban
+ * и быстрые действия. Правила целевой стадии — `stageRuleErrors`, те же, что у формы изменения.
+ *
+ * | Переход               | Проверка                        | Запись                                      |
+ * | открытая → открытая   | —                               | только стадия                               |
+ * | любая → `won`         | сумма > 0 и контакт             | `closedAt = now`, `lostReason = null`       |
+ * | любая → `lost`        | причина не пустая после trim    | `closedAt = now`, причина сохраняется       |
+ * | закрытая → открытая   | подтверждение — в интерфейсе    | `closedAt = null`, `lostReason = null`      |
+ *
+ * Для `won` можно сразу дополнить сделку суммой и контактом из диалога; без них берутся текущие значения.
+ *
+ * Защита от устаревших данных и гонок — условный `updateMany`:
+ * - `stageId = fromStageId`: если стадию уже сменили (другая вкладка, двойной перенос), запись не изменится;
+ * - для `won` без новых значений — ещё и `amount > 0`, `contactId IS NOT NULL`: если форма изменения
+ *   успела очистить сумму или контакт после проверки, сделка не закроется с нарушением правила.
+ */
+export async function changeDealStage(id: string, input: DealStageChangeInput): Promise<{ stageName: string }> {
+  const [deal, target] = await Promise.all([
+    prisma.opportunity.findUnique({
+      where: { id },
+      select: { stageId: true, amount: true, contactId: true },
+    }),
+    prisma.stage.findUnique({ where: { id: input.stageId }, select: { id: true, name: true, type: true } }),
+  ]);
+  if (!deal) throw new DomainError(NOT_FOUND_MESSAGE);
+  if (!target) throw new DomainError(STAGE_NOT_FOUND_MESSAGE, { stageId: STAGE_NOT_FOUND_MESSAGE });
+  if (deal.stageId !== input.fromStageId) throw new DomainError(STAGE_CHANGED_MESSAGE);
+  if (deal.stageId === target.id) throw new DomainError(SAME_STAGE_MESSAGE, { stageId: SAME_STAGE_MESSAGE });
+
+  // Сумма и контакт из диалога учитываются только при выигрыше; иначе стадия не трогает эти поля.
+  const isWon = target.type === "won";
+  const amount = isWon && input.amount !== undefined ? input.amount : (deal.amount?.toString() ?? null);
+  const contactId = isWon && input.contactId !== undefined ? input.contactId : deal.contactId;
+  const lostReason = target.type === "lost" ? (input.lostReason?.trim() ?? null) : null;
+
+  const errors = stageRuleErrors(target.type, { amount, contactId, lostReason });
+  if (Object.keys(errors).length) throw new DomainError(closeRefusalMessage(errors), errors);
+  if (isWon && input.contactId !== undefined && !(await prisma.contact.count({ where: { id: input.contactId } }))) {
+    throw new DomainError(FIELDS_MESSAGE, { contactId: "Выбранный контакт не найден — возможно, его удалили." });
+  }
+
+  const where: Prisma.OpportunityWhereInput = { id, stageId: input.fromStageId };
+  if (isWon && input.amount === undefined) where.amount = { gt: 0 };
+  if (isWon && input.contactId === undefined) where.contactId = { not: null };
+
+  const data: Prisma.OpportunityUncheckedUpdateManyInput = {
+    stageId: target.id,
+    closedAt: target.type === "open" ? null : new Date(),
+    lostReason,
+  };
+  if (isWon) Object.assign(data, { amount, contactId });
+
+  const { count } = await prisma.opportunity.updateMany({ where, data });
+  if (count === 1) return { stageName: target.name };
+
+  // Ничего не обновлено: сделку удалили, сменили стадию или очистили сумму/контакт после проверки.
+  const now = await prisma.opportunity.findUnique({ where: { id }, select: { stageId: true } });
+  if (!now) throw new DomainError(NOT_FOUND_MESSAGE);
+  if (now.stageId !== input.fromStageId) throw new DomainError(STAGE_CHANGED_MESSAGE);
+  throw new DomainError("Данные сделки только что изменили. Обновите страницу и попробуйте ещё раз.");
 }
 
 export type DealDeleteImpact = {

@@ -14,6 +14,7 @@ function revalidateContactPages() {
   revalidatePath("/contacts", "layout");
   revalidatePath("/accounts", "layout");
   revalidatePath("/deals", "layout");
+  revalidatePath("/pipeline");
   revalidatePath("/search");
 }
 
