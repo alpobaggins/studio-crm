@@ -30,6 +30,36 @@ export const optionalPhone = z.preprocess(
     .optional(),
 );
 
+/**
+ * Денежная сумма в рублях для `Decimal(14, 2)`: пробелы между разрядами и запятая допустимы;
+ * до 12 цифр и 2 знаков после запятой. Результат — строка: Prisma принимает её как Decimal без потери копеек.
+ */
+export const optionalMoney = (formatMessage: string) =>
+  z.preprocess(
+    (value) => {
+      const text = blankToUndefined(value);
+      return typeof text === "string" ? text.replace(/[\s\u00a0\u202f]/g, "").replace(",", ".") : text;
+    },
+    z.string().regex(/^\d{1,12}(\.\d{1,2})?$/, formatMessage).optional(),
+  );
+
+/** Дата без времени из `<input type="date">` → Date на полночь UTC (как хранится `@db.Date`). */
+export const optionalDate = z.preprocess(
+  blankToUndefined,
+  z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Укажите дату в формате ДД.ММ.ГГГГ")
+    .transform((value, ctx) => {
+      const date = new Date(`${value}T00:00:00.000Z`);
+      if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
+        ctx.addIssue({ code: "custom", message: "Такой даты нет — проверьте день и месяц" });
+        return z.NEVER;
+      }
+      return date;
+    })
+    .optional(),
+);
+
 export const optionalId = z.preprocess(blankToUndefined, z.string().optional());
 
 export type ParseResult<T> =

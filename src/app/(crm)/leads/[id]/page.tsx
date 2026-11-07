@@ -156,9 +156,10 @@ function ConvertedLinks({ lead }: { lead: Lead }) {
           )}
         </LinkRow>
         <LinkRow label="Сделка">
-          {/* Страницы сделок появятся на шаге 08; до этого — название без ссылки. */}
           {lead.convertedOpportunity ? (
-            lead.convertedOpportunity.name
+            <Link href={`/deals/${lead.convertedOpportunity.id}`} className={valueLinkClasses}>
+              {lead.convertedOpportunity.name}
+            </Link>
           ) : (
             <span className="text-ink-secondary">Сделка не создана или удалена</span>
           )}

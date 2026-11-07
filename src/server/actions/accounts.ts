@@ -8,10 +8,11 @@ import { createAccount, deleteAccount, updateAccount } from "@/server/services/a
 import { accountSchema } from "@/server/validation/account";
 import { parseForm } from "@/server/validation/common";
 
-// Компании показываются и в разделе контактов (название компании у контакта).
+// Компании показываются и в разделах контактов и сделок (название компании у контакта и сделки).
 function revalidateAccountPages() {
   revalidatePath("/accounts", "layout");
   revalidatePath("/contacts", "layout");
+  revalidatePath("/deals", "layout");
 }
 
 export async function createAccountAction(_prev: FormState, formData: FormData): Promise<FormState> {

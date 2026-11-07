@@ -50,7 +50,7 @@ export async function getContactDeleteImpact(id: string): Promise<ContactDeleteI
     opportunities > 0
       ? `Нельзя удалить контакт: он привязан к ${pluralRu(opportunities, ["сделке", "сделкам", "сделкам"])}. Сначала отвяжите его в сделках.`
       : null;
-  const consequences = deleteConsequences("контактом", activities);
+  const consequences = deleteConsequences("с контактом", activities);
   return { opportunities, activities, blockedReason, consequences };
 }
 

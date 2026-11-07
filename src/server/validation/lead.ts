@@ -1,35 +1,9 @@
 import { z } from "zod";
 import { EDITABLE_LEAD_STATUSES, LEAD_SOURCES, LEAD_STATUSES } from "@/lib/leads";
-import { blankToUndefined, optionalEmail, optionalPhone, optionalText, requiredText } from "./common";
+import { blankToUndefined, optionalDate, optionalEmail, optionalMoney, optionalPhone, optionalText, requiredText } from "./common";
 
-/** Бюджет в рублях: пробелы между разрядами и запятая допустимы; до 12 цифр и 2 знаков после запятой (Decimal(14, 2)). */
-const optionalBudget = z.preprocess(
-  (value) => {
-    const text = blankToUndefined(value);
-    return typeof text === "string" ? text.replace(/[\s  ]/g, "").replace(",", ".") : text;
-  },
-  z
-    .string()
-    .regex(/^\d{1,12}(\.\d{1,2})?$/, "Бюджет: сумма в рублях, например 1500000 или 1500000,50")
-    .optional(),
-);
-
-/** Дата без времени из `<input type="date">` → Date на полночь UTC (как хранится `@db.Date`). */
-const optionalDate = z.preprocess(
-  blankToUndefined,
-  z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Укажите дату в формате ДД.ММ.ГГГГ")
-    .transform((value, ctx) => {
-      const date = new Date(`${value}T00:00:00.000Z`);
-      if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
-        ctx.addIssue({ code: "custom", message: "Такой даты нет — проверьте день и месяц" });
-        return z.NEVER;
-      }
-      return date;
-    })
-    .optional(),
-);
+/** Бюджет в рублях: пробелы между разрядами и запятая допустимы. */
+const optionalBudget = optionalMoney("Бюджет: сумма в рублях, например 1500000 или 1500000,50");
 
 const EMAIL_OR_PHONE_MESSAGE = "Укажите телефон или email";
 

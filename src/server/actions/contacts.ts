@@ -8,10 +8,12 @@ import { createContact, deleteContact, updateContact } from "@/server/services/c
 import { parseForm } from "@/server/validation/common";
 import { contactSchema } from "@/server/validation/contact";
 
-// Контакты показываются в карточке компании и в количестве контактов в списке компаний.
+// Контакты показываются в карточке компании, в количестве контактов в списке компаний,
+// в списке и карточке сделок и в списке контактов формы сделки.
 function revalidateContactPages() {
   revalidatePath("/contacts", "layout");
   revalidatePath("/accounts", "layout");
+  revalidatePath("/deals", "layout");
 }
 
 export async function createContactAction(_prev: FormState, formData: FormData): Promise<FormState> {

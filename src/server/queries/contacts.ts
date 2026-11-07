@@ -20,3 +20,11 @@ export function getContact(id: string) {
     include: { account: { select: { id: true, name: true, industry: true, city: true } } },
   });
 }
+
+/** Варианты для выбора контакта в форме сделки: рядом с именем — его компания (Plan.md, шаг 08). */
+export function listContactOptions() {
+  return prisma.contact.findMany({
+    orderBy: { fullName: "asc" },
+    select: { id: true, fullName: true, account: { select: { name: true } } },
+  });
+}

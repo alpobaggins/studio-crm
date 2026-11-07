@@ -127,6 +127,9 @@ export function SelectField({
   return (
     <FieldShell id={id} label={label} required={required} hint={hint} error={error}>
       <select
+        // После action React 19 сбрасывает форму, а `<select>` применяет defaultValue только при монтировании:
+        // без key сброс вернул бы первый вариант вместо значения, введённого до ошибки сервера.
+        key={defaultValue ?? ""}
         id={id}
         name={name}
         defaultValue={defaultValue ?? ""}

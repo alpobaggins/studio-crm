@@ -47,7 +47,7 @@ export async function getAccountDeleteImpact(id: string): Promise<AccountDeleteI
   const blockedReason = links.length
     ? `Нельзя удалить компанию: сначала удалите или перепривяжите ${links.join(" и ")}.`
     : null;
-  const consequences = deleteConsequences("компанией", activities);
+  const consequences = deleteConsequences("с компанией", activities);
   return { contacts, opportunities, activities, blockedReason, consequences };
 }
 

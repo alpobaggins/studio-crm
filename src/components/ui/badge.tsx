@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
-type Variant = "outline" | "control" | "ghost" | "inverse";
+type Variant = "outline" | "outlineMuted" | "control" | "ghost" | "inverse";
 
 // Только оттенки серого и обязательная подпись: цвет не единственный сигнал (DESIGN.md, «Бейджи и статусы»).
 const variants: Record<Variant, string> = {
   outline: "border border-line-control bg-card text-ink",
+  outlineMuted: "border border-line-control text-ink-secondary",
   control: "bg-control text-ink",
   ghost: "text-ink-secondary",
   inverse: "bg-inverse text-ink-inverse",

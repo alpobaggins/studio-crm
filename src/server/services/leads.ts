@@ -77,7 +77,7 @@ export async function getLeadDeleteImpact(id: string): Promise<LeadDeleteImpact>
   const consequences =
     (lead?.status === "converted"
       ? "Компания, контакт и сделка, созданные при конвертации, останутся. "
-      : "") + deleteConsequences("лидом", activities);
+      : "") + deleteConsequences("с лидом", activities);
   return { activities, blockedReason: null, consequences };
 }
 
