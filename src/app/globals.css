@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Временная основа. Токены DESIGN.md подключаются на шаге 05. */
+body {
+  background: #ffffff;
+  color: #141414;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}

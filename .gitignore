@@ -1,5 +1,26 @@
-.env
-.env.*.local
+# зависимости
 node_modules/
+/.pnp
+.pnp.*
+
+# next.js
 .next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# тесты
+/coverage
+
+# окружение: настоящие значения не коммитятся, шаблон коммитится
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# прочее
 .DS_Store
+*.pem
+npm-debug.log*
+.vercel
