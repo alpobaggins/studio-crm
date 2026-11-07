@@ -1,7 +1,7 @@
 // Бизнес-правила контактов (Plan.md 1.5, 1.8). Без зависимостей от Next.js — вызываются из actions и тестов.
 import { prisma } from "@/server/db";
 import { DomainError } from "@/server/errors";
-import { pluralRu } from "@/lib/format";
+import { deleteConsequences, pluralRu } from "@/lib/format";
 import type { ContactInput } from "@/server/validation/contact";
 
 async function toData(input: ContactInput) {
@@ -50,10 +50,7 @@ export async function getContactDeleteImpact(id: string): Promise<ContactDeleteI
     opportunities > 0
       ? `Нельзя удалить контакт: он привязан к ${pluralRu(opportunities, ["сделке", "сделкам", "сделкам"])}. Сначала отвяжите его в сделках.`
       : null;
-  const consequences =
-    (activities > 0
-      ? `Вместе с контактом будут удалены ${pluralRu(activities, ["активность", "активности", "активностей"])}. `
-      : "") + "Действие нельзя отменить.";
+  const consequences = deleteConsequences("контактом", activities);
   return { opportunities, activities, blockedReason, consequences };
 }
 

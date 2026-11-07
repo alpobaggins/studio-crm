@@ -1,7 +1,7 @@
 // Бизнес-правила компаний (Plan.md 1.8). Без зависимостей от Next.js — вызываются из actions и тестов.
 import { prisma } from "@/server/db";
 import { DomainError } from "@/server/errors";
-import { pluralRu } from "@/lib/format";
+import { deleteConsequences, pluralRu } from "@/lib/format";
 import type { AccountInput } from "@/server/validation/account";
 
 function toData(input: AccountInput) {
@@ -47,10 +47,7 @@ export async function getAccountDeleteImpact(id: string): Promise<AccountDeleteI
   const blockedReason = links.length
     ? `Нельзя удалить компанию: сначала удалите или перепривяжите ${links.join(" и ")}.`
     : null;
-  const consequences =
-    (activities > 0
-      ? `Вместе с компанией будут удалены ${pluralRu(activities, ["активность", "активности", "активностей"])}. `
-      : "") + "Действие нельзя отменить.";
+  const consequences = deleteConsequences("компанией", activities);
   return { contacts, opportunities, activities, blockedReason, consequences };
 }
 

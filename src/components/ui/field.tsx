@@ -67,8 +67,14 @@ export function TextField({
   error,
   type = "text",
   autoComplete,
+  inputMode,
   maxLength = 200,
-}: CommonProps & { type?: "text" | "email" | "tel" | "url"; autoComplete?: string; maxLength?: number }) {
+}: CommonProps & {
+  type?: "text" | "email" | "tel" | "url" | "date";
+  autoComplete?: string;
+  inputMode?: "decimal";
+  maxLength?: number;
+}) {
   const id = `field-${name}`;
   return (
     <FieldShell id={id} label={label} required={required} hint={hint} error={error}>
@@ -78,8 +84,9 @@ export function TextField({
         type={type}
         defaultValue={defaultValue ?? ""}
         required={required}
-        maxLength={maxLength}
+        maxLength={type === "date" ? undefined : maxLength}
         autoComplete={autoComplete}
+        inputMode={inputMode}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, error, hint)}
         className={`h-10 ${controlClasses(error)}`}

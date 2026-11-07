@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Пустые строки из формы считаются «не указано».
-const blankToUndefined = (value: unknown) => {
+export const blankToUndefined = (value: unknown) => {
   if (typeof value !== "string") return value;
   const trimmed = value.trim();
   return trimmed === "" ? undefined : trimmed;

@@ -104,7 +104,7 @@ describe("компании", () => {
       opportunities: 0,
       activities: 1,
       blockedReason: null,
-      consequences: "Вместе с компанией будут удалены 1 активность. Действие нельзя отменить.",
+      consequences: "Вместе с компанией будет удалена 1 активность. Действие нельзя отменить.",
     });
     await deleteAccount(id);
     assert.equal(await prisma.account.count({ where: { id } }), 0);
