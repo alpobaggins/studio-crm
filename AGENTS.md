@@ -58,7 +58,7 @@
 
 **Заранее разрешено только на шаге 02 и только после команды его начать:** установка Node.js 24 LTS через nvm; создание двух локальных баз PostgreSQL 16 и необходимых ролей. Существующие базы нельзя удалять или пересоздавать.
 
-Не применять в проекте: `prisma migrate reset` и `prisma db push`. `prisma migrate dev` запускать только на `studio_crm_agent`.
+Не применять в проекте: `prisma migrate reset` и `prisma db push`. `prisma migrate dev` запускать только на `studio_crm_agent`. Никогда не указывать `studio_crm` или `studio_crm_agent` в `--shadow-database-url`: Prisma очищает shadow-базу. Для сравнения схем без shadow-базы использовать `prisma migrate diff --from-url`.
 
 Если нужно проверить изменяющий данные сценарий, использовать `studio_crm_agent`. Если это невозможно — выполнить остальные проверки и сообщить, что осталось непроверенным.
 

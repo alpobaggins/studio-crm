@@ -1,4 +1,6 @@
-// Схема Prisma 6. Модели CRM добавляются на шаге 03.
+// Схема Prisma 6 для Studio CRM. Правила — Plan.md, разделы 1–2.
+// Дополнительно в миграции вручную заданы CHECK-ограничения Activity и начальные стадии (Plan.md 1.4, 1.7):
+// Prisma не описывает их в схеме, поэтому они живут только в SQL миграции.
 
 generator client {
   provider = "prisma-client-js"
@@ -7,4 +9,174 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum LeadSource {
+  site
+  email
+  phone
+  referral
+  manual
+}
+
+enum LeadStatus {
+  new
+  in_progress
+  qualified
+  disqualified
+  converted
+}
+
+/// Статус сделки вычисляется из типа стадии; отдельного поля статуса у сделки нет.
+enum StageType {
+  open
+  won
+  lost
+}
+
+enum ActivityType {
+  note
+  task
+}
+
+model Lead {
+  id          String     @id @default(cuid())
+  contactName String
+  companyName String?
+  email       String?
+  phone       String?
+  source      LeadSource
+  status      LeadStatus @default(new)
+  budget      Decimal?   @db.Decimal(14, 2)
+  venue       String?
+  eventDate   DateTime?  @db.Date
+  workFormat  String?
+  comment     String?
+
+  convertedAt            DateTime?
+  convertedAccountId     String?
+  convertedAccount       Account?     @relation("LeadConvertedAccount", fields: [convertedAccountId], references: [id], onDelete: SetNull)
+  convertedContactId     String?
+  convertedContact       Contact?     @relation("LeadConvertedContact", fields: [convertedContactId], references: [id], onDelete: SetNull)
+  convertedOpportunityId String?
+  convertedOpportunity   Opportunity? @relation("LeadConvertedOpportunity", fields: [convertedOpportunityId], references: [id], onDelete: SetNull)
+
+  activities Activity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([source])
+  @@index([convertedAccountId])
+  @@index([convertedContactId])
+  @@index([convertedOpportunityId])
+}
+
+model Account {
+  id       String  @id @default(cuid())
+  name     String
+  industry String?
+  website  String?
+  email    String?
+  phone    String?
+  city     String?
+  comment  String?
+
+  contacts       Contact[]
+  opportunities  Opportunity[]
+  activities     Activity[]
+  convertedLeads Lead[]        @relation("LeadConvertedAccount")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  fullName  String
+  /// Необязательная связь. Restrict задан явно: компанию нельзя удалить, пока есть контакты.
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  position  String?
+  email     String?
+  phone     String?
+  comment   String?
+
+  opportunities  Opportunity[]
+  activities     Activity[]
+  convertedLeads Lead[]        @relation("LeadConvertedContact")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId])
+}
+
+model Opportunity {
+  id                String    @id @default(cuid())
+  name              String
+  accountId         String
+  account           Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  /// Независима от accountId: совпадение компании контакта и сделки не требуется.
+  contactId         String?
+  contact           Contact?  @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  stageId           String
+  stage             Stage     @relation(fields: [stageId], references: [id], onDelete: Restrict)
+  amount            Decimal?  @db.Decimal(14, 2)
+  venue             String?
+  eventDate         DateTime? @db.Date
+  workFormat        String?
+  expectedCloseDate DateTime? @db.Date
+  lostReason        String?
+  closedAt          DateTime?
+  comment           String?
+
+  activities     Activity[]
+  convertedLeads Lead[]     @relation("LeadConvertedOpportunity")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId])
+  @@index([contactId])
+  @@index([stageId])
+}
+
+/// Справочник без CRUD. Строки вставляются миграцией, seed их не трогает.
+model Stage {
+  id    String    @id
+  key   String    @unique
+  name  String
+  order Int       @unique
+  type  StageType
+
+  opportunities Opportunity[]
+}
+
+/// Принадлежит ровно одному родителю; задача обязана иметь dueDate (CHECK в миграции).
+model Activity {
+  id      String       @id @default(cuid())
+  type    ActivityType
+  body    String
+  dueDate DateTime?    @db.Date
+  done    Boolean      @default(false)
+
+  leadId        String?
+  lead          Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  accountId     String?
+  account       Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contactId     String?
+  contact       Contact?     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([leadId])
+  @@index([accountId])
+  @@index([contactId])
+  @@index([opportunityId])
+  @@index([type, done, dueDate])
 }
