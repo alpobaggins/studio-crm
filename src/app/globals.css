@@ -1,8 +1,124 @@
 @import "tailwindcss";
 
-/* Временная основа. Токены DESIGN.md подключаются на шаге 05. */
+/* Токены DESIGN.md, раздел 3. Значения вне токенов в компонентах не используются. */
+:root {
+  /* Поверхности */
+  --surface-page: #ffffff;
+  --surface-subtle: #f8f8f8;
+  --surface-block: #f4f4f4;
+  --surface-card: #ffffff;
+  --surface-control: #ededed;
+  --surface-control-hover: #e3e3e3;
+  --surface-inverse: #141414;
+  --surface-inverse-hover: #2e2e2e;
+
+  /* Текст */
+  --text-primary: #141414;
+  --text-secondary: #6b6b6b;
+  --text-disabled: #a3a3a3;
+  --text-inverse: #ffffff;
+
+  /* Акцент: единственный цвет, означает «можно нажать» (DESIGN.md 3.1) */
+  --accent: #1f5bff;
+  --accent-hover: #1749d6;
+
+  /* Линии */
+  --line-subtle: #ebebeb;
+  --line-control: #8c8c8c;
+  --line-focus: var(--accent);
+
+  --shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.14);
+}
+
+/*
+ * Утилиты Tailwind строятся только из токенов: стандартная палитра и скругления отключены.
+ * bg-page/subtle/block/card/control/inverse → --surface-*, text-ink* → --text-*,
+ * *-accent → --accent, border-line* → --line-*.
+ */
+@theme inline {
+  --color-*: initial;
+  --color-page: var(--surface-page);
+  --color-subtle: var(--surface-subtle);
+  --color-block: var(--surface-block);
+  --color-card: var(--surface-card);
+  --color-control: var(--surface-control);
+  --color-control-hover: var(--surface-control-hover);
+  --color-inverse: var(--surface-inverse);
+  --color-inverse-hover: var(--surface-inverse-hover);
+  --color-ink: var(--text-primary);
+  --color-ink-secondary: var(--text-secondary);
+  --color-ink-disabled: var(--text-disabled);
+  --color-ink-inverse: var(--text-inverse);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-line: var(--line-subtle);
+  --color-line-control: var(--line-control);
+  --color-focus: var(--line-focus);
+
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --radius-*: initial;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --shadow-overlay: var(--shadow-overlay);
+
+  /* Типографика, DESIGN.md 3.2 */
+  --text-title-1: clamp(2rem, 1.6rem + 1.2vw, 2.5rem);
+  --text-title-1--line-height: 1.1;
+  --text-title-1--letter-spacing: -0.035em;
+  --text-title-1--font-weight: 700;
+  --text-display: 2rem;
+  --text-display--line-height: 2.25rem;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 650;
+  --text-title-2: 1.25rem;
+  --text-title-2--line-height: 1.625rem;
+  --text-title-2--letter-spacing: -0.02em;
+  --text-title-2--font-weight: 650;
+  --text-title-3: 1rem;
+  --text-title-3--line-height: 1.375rem;
+  --text-title-3--letter-spacing: -0.01em;
+  --text-title-3--font-weight: 600;
+  --text-lead: 1.0625rem;
+  --text-lead--line-height: 1.5rem;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.375rem;
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.125rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-caption--font-weight: 500;
+}
+
+html {
+  background: var(--surface-page);
+}
+
 body {
-  background: #ffffff;
-  color: #141414;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Кольцо фокуса только при навигации с клавиатуры; после клика мышью браузер его не показывает. */
+:focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
