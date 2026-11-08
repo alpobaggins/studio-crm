@@ -58,8 +58,8 @@ async function DashboardContent() {
         <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
           <KpiTile label="Всего лидов" value={String(kpi.leads)} href="/leads" />
           <KpiTile label="Открытых сделок" value={String(kpi.openDeals)} href="/deals?status=open" />
-          {/* На узком экране знак ₽ может перейти на вторую строку: число не переносится и не обрезается. */}
-          <KpiTile label="Сумма открытых сделок" value={formatMoney(kpi.openSum).replace(/\s₽$/, " ₽")} href="/deals?status=open" />
+          {/* На телефоне сумма занимает обе колонки: восьмизначное значение со знаком ₽ не помещается в половину ширины. */}
+          <KpiTile label="Сумма открытых сделок" value={formatMoney(kpi.openSum)} href="/deals?status=open" className="max-sm:col-span-2" />
           <KpiTile label="Просроченных задач" value={String(kpi.overdueTasks)} href="#overdue-tasks" />
         </div>
       </section>
@@ -153,9 +153,9 @@ async function DashboardContent() {
   );
 }
 
-function KpiTile({ label, value, href }: { label: string; value: string; href: string }) {
+function KpiTile({ label, value, href, className = "" }: { label: string; value: string; href: string; className?: string }) {
   return (
-    <Link href={href} className="group flex flex-col gap-3 rounded-lg bg-card px-5 py-4 hover:bg-subtle">
+    <Link href={href} className={`group flex flex-col gap-3 rounded-lg bg-card px-5 py-4 hover:bg-subtle ${className}`}>
       <span className="text-small text-ink-secondary group-hover:text-ink">{label}</span>
       {/* Длинная сумма уменьшается до 24 px, а не обрезается (DESIGN.md 5). */}
       <span className="text-display text-[length:clamp(1.5rem,0.9rem+1.6vw,2rem)] tabular-nums">{value}</span>

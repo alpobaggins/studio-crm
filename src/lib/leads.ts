@@ -40,14 +40,6 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   converted: "Конвертирован",
 };
 
-export function isLeadSource(value: unknown): value is LeadSource {
-  return typeof value === "string" && (LEAD_SOURCES as readonly string[]).includes(value);
-}
-
-export function isLeadStatus(value: unknown): value is LeadStatus {
-  return typeof value === "string" && (LEAD_STATUSES as readonly string[]).includes(value);
-}
-
 export function isEditableLeadStatus(value: unknown): value is EditableLeadStatus {
   return typeof value === "string" && (EDITABLE_LEAD_STATUSES as readonly string[]).includes(value);
 }
