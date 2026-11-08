@@ -11,9 +11,10 @@ import { leadSchema } from "@/server/validation/lead";
 import { leadConversionSchema } from "@/server/validation/lead-conversion";
 
 // Список с любыми фильтрами, карточка и форма изменения лежат под /leads; имя лида показано
-// в карточке созданной из него сделки; лиды есть в результатах глобального поиска.
+// в карточке созданной из него сделки; лиды есть в результатах глобального поиска и в показателях дашборда.
 function revalidateLeadPages() {
   revalidatePath("/leads", "layout");
+  revalidatePath("/dashboard");
   revalidatePath("/deals", "layout");
   revalidatePath("/search");
 }
@@ -58,9 +59,10 @@ export async function deleteLeadAction(id: string): Promise<FormState> {
 }
 
 // Конвертация создаёт компанию (или связывает с существующей), контакт и, по выбору, сделку:
-// они появляются в своих разделах, в карточках друг друга и в глобальном поиске.
+// они появляются в своих разделах, в карточках друг друга, в глобальном поиске и в показателях дашборда.
 function revalidateConversionPages() {
   revalidatePath("/leads", "layout");
+  revalidatePath("/dashboard");
   revalidatePath("/accounts", "layout");
   revalidatePath("/contacts", "layout");
   revalidatePath("/deals", "layout");

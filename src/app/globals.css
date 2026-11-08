@@ -27,6 +27,12 @@
   --line-control: #8c8c8c;
   --line-focus: var(--accent);
 
+  /* Диаграммы: столбцы монохромные, синий данные не кодирует (DESIGN.md 6) */
+  --chart-primary: #141414;
+  --chart-secondary: #6b6b6b;
+  --chart-tertiary: #a3a3a3;
+  --chart-grid: #e3e3e3;
+
   --shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.14);
 }
 

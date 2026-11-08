@@ -9,9 +9,10 @@ import { parseForm } from "@/server/validation/common";
 import { dealCreateSchema, dealStageChangeSchema, dealUpdateSchema } from "@/server/validation/deal";
 
 // Сделка видна в своём разделе, на доске воронки, в блоке «Сделки» карточек компании и контакта,
-// названием в карточке конвертированного лида и в результатах глобального поиска.
+// названием в карточке конвертированного лида, в результатах глобального поиска и в показателях дашборда.
 function revalidateDealPages() {
   revalidatePath("/deals", "layout");
+  revalidatePath("/dashboard");
   revalidatePath("/pipeline");
   revalidatePath("/accounts", "layout");
   revalidatePath("/contacts", "layout");

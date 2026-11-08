@@ -8,9 +8,12 @@ import { createAccount, deleteAccount, updateAccount } from "@/server/services/a
 import { accountSchema } from "@/server/validation/account";
 import { parseForm } from "@/server/validation/common";
 
-// Компании показываются и в разделах контактов и сделок (название компании у контакта и сделки).
+// Компании показываются и в разделах контактов и сделок (название компании у контакта и сделки),
+// в карточке конвертированного лида; удаление компании удаляет её задачи — меняется KPI дашборда.
 function revalidateAccountPages() {
   revalidatePath("/accounts", "layout");
+  revalidatePath("/leads", "layout");
+  revalidatePath("/dashboard");
   revalidatePath("/contacts", "layout");
   revalidatePath("/deals", "layout");
   revalidatePath("/pipeline");

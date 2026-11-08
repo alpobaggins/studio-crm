@@ -15,11 +15,12 @@ const PARENT_PATH: Record<ActivityParent["type"], string> = {
 };
 
 /**
- * Активности видны только в карточке своего родителя (там же — число активностей в диалоге удаления),
- * а у сделки ещё и бейджем «Просрочено» на доске воронки.
+ * Активности видны в карточке своего родителя (там же — число активностей в диалоге удаления),
+ * задачи — в KPI и списке просроченных на дашборде, у сделки ещё и бейджем «Просрочено» на доске воронки.
  */
 function revalidateActivityPages(parent: ActivityParent) {
   revalidatePath(`${PARENT_PATH[parent.type]}/${parent.id}`);
+  revalidatePath("/dashboard");
   if (parent.type === "opportunity") revalidatePath("/pipeline");
 }
 

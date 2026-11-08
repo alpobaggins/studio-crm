@@ -9,9 +9,12 @@ import { parseForm } from "@/server/validation/common";
 import { contactSchema } from "@/server/validation/contact";
 
 // Контакты показываются в карточке компании, в количестве контактов в списке компаний,
-// в списке и карточке сделок и в списке контактов формы сделки.
+// в списке и карточке сделок, в списке контактов формы сделки и в карточке конвертированного лида;
+// удаление контакта удаляет его задачи — меняется KPI дашборда.
 function revalidateContactPages() {
   revalidatePath("/contacts", "layout");
+  revalidatePath("/leads", "layout");
+  revalidatePath("/dashboard");
   revalidatePath("/accounts", "layout");
   revalidatePath("/deals", "layout");
   revalidatePath("/pipeline");
